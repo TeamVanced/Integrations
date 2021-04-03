@@ -2,7 +2,6 @@ package pl.jakubweg;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.os.Handler;
@@ -10,7 +9,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
@@ -257,7 +255,7 @@ public class PlayerController {
             @Override
             public void run() {
                 if (SponsorBlockSettings.countSkips &&
-                        segment.category != SponsorBlockSettings.SegmentInfo.Preview &&
+                        segment.category != SponsorBlockSettings.SegmentInfo.Unsubmitted &&
                         millis - segment.start < 2000) {
                     // Only skips from the start should count as a view
                     SponsorBlockUtils.sendViewCountRequest(segment);
@@ -486,7 +484,7 @@ public class PlayerController {
 
         skipToMillisecond(segment.end + 2);
         SkipSegmentView.hide();
-        if (segment.category == SponsorBlockSettings.SegmentInfo.Preview) {
+        if (segment.category == SponsorBlockSettings.SegmentInfo.Unsubmitted) {
             SponsorSegment[] newSegments = new SponsorSegment[sponsorSegmentsOfCurrentVideo.length - 1];
             int i = 0;
             for (SponsorSegment sponsorSegment : sponsorSegmentsOfCurrentVideo) {

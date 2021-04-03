@@ -84,7 +84,7 @@ public abstract class SponsorBlockUtils {
     private static final DialogInterface.OnClickListener segmentTypeListener = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            SponsorBlockSettings.SegmentInfo segmentType = SponsorBlockSettings.SegmentInfo.valuesWithoutPreview()[which];
+            SponsorBlockSettings.SegmentInfo segmentType = SponsorBlockSettings.SegmentInfo.valuesWithoutUnsubmitted()[which];
             boolean enableButton;
             if (!segmentType.behaviour.showOnTimeBar) {
                 Toast.makeText(
@@ -114,7 +114,7 @@ public abstract class SponsorBlockUtils {
             Context context = ((AlertDialog) dialog).getContext();
             dialog.dismiss();
 
-            SponsorBlockSettings.SegmentInfo[] values = SponsorBlockSettings.SegmentInfo.valuesWithoutPreview();
+            SponsorBlockSettings.SegmentInfo[] values = SponsorBlockSettings.SegmentInfo.valuesWithoutUnsubmitted();
             CharSequence[] titles = new CharSequence[values.length];
             for (int i = 0; i < values.length; i++) {
 //                titles[i] = values[i].title;
@@ -316,7 +316,7 @@ public abstract class SponsorBlockUtils {
             final SponsorSegment[] segments = original == null ? new SponsorSegment[1] : Arrays.copyOf(original, original.length + 1);
 
             segments[segments.length - 1] = new SponsorSegment(newSponsorSegmentStartMillis, newSponsorSegmentEndMillis,
-                    SponsorBlockSettings.SegmentInfo.Preview, null);
+                    SponsorBlockSettings.SegmentInfo.Unsubmitted, null);
 
             Arrays.sort(segments);
             sponsorSegmentsOfCurrentVideo = segments;

@@ -20,6 +20,7 @@ public class SponsorBlockSettings {
     public static final String PREFERENCES_NAME = "sponsor-block";
     public static final String PREFERENCES_KEY_SHOW_TOAST_WHEN_SKIP = "show-toast";
     public static final String PREFERENCES_KEY_COUNT_SKIPS = "count-skips";
+    public static final String PREFERENCES_KEY_SKIP_ON_CLICK = "skip-on-click";
     public static final String PREFERENCES_KEY_UUID = "uuid";
     public static final String PREFERENCES_KEY_ADJUST_NEW_SEGMENT_STEP = "new-segment-step-accuracy";
     public static final String PREFERENCES_KEY_SPONSOR_BLOCK_ENABLED = "sb-enabled";
@@ -36,6 +37,7 @@ public class SponsorBlockSettings {
     public static boolean isAddNewSegmentEnabled = false;
     public static boolean showToastWhenSkippedAutomatically = true;
     public static boolean countSkips = true;
+    public static boolean skipOnClick = true;
     public static int adjustNewSegmentMillis = 150;
     public static String uuid = "<invalid>";
     private static String sponsorBlockUrlCategories = "[]";
@@ -122,6 +124,8 @@ public class SponsorBlockSettings {
         if (tmp1 != null)
             adjustNewSegmentMillis = Integer.parseInt(tmp1);
 
+        countSkips = preferences.getBoolean(PREFERENCES_KEY_COUNT_SKIPS, countSkips);
+        skipOnClick = preferences.getBoolean(PREFERENCES_KEY_SKIP_ON_CLICK, skipOnClick);
 
         uuid = preferences.getString(PREFERENCES_KEY_UUID, null);
         if (uuid == null) {

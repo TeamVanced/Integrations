@@ -149,6 +149,8 @@
     <string name="general_skiptoast_sum">Click to see an example toast</string>
     <string name="general_skipcount">Skip count tracking</string>
     <string name="general_skipcount_sum">This lets SponsorBlock leaderboard system know how much time people have saved. The extension sends a message to the server each time you skip a segment.</string>
+    <string name="general_skip_on_click">Skip on click</string>
+    <string name="general_skip_on_click_sum">Switch this off to disable skipping segments when they are clicked in the timeline.</string>
     <string name="general_adjusting">Adjusting new segment step</string>
     <string name="general_adjusting_sum">This is the number of milliseconds you can move when you use the time adjustment buttons while adding new segment</string>
     <string name="general_uuid">Your unique user id</string>

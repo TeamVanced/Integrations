@@ -467,6 +467,9 @@ public class PlayerController {
             if (!(segment.category.behaviour.skip || wasClicked))
                 return;
 
+            if (wasClicked && !SponsorBlockSettings.skipOnClick)
+                return;
+
             sendViewRequestAsync(millis, segment);
             skipSegment(segment, wasClicked);
             break;

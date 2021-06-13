@@ -10,7 +10,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.apps.youtube.app.YouTubeTikTokRoot_Application;
+
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Timer;
@@ -58,13 +61,17 @@ public class PlayerController {
 
         VideoInformation.currentVideoId = videoId;
 
+        Context context = YouTubeTikTokRoot_Application.getAppContext();
+        if(context == null){
+            Log.e(TAG, "context is null");
+            return;
+        }
+        SponsorBlockSettings.update(context);
+
         if (!SponsorBlockSettings.isSponsorBlockEnabled) {
             currentVideoId = null;
             return;
         }
-
-        if (Looper.myLooper() != Looper.getMainLooper()) // check if thread is not main
-            return;
 
         if (videoId.equals(currentVideoId))
             return;
@@ -200,6 +207,12 @@ public class PlayerController {
         if (millis <= 0) return;
         //findAndSkipSegment(false);
 
+        if (millis == currentVideoLength) {
+            SponsorBlockUtils.hideShieldButton();
+            SponsorBlockUtils.hideVoteButton();
+            return;
+        }
+
         SponsorSegment[] segments = sponsorSegmentsOfCurrentVideo;
         if (segments == null || segments.length == 0) return;
 
@@ -268,12 +281,20 @@ public class PlayerController {
      * Called very high frequency (once every about 100ms), also in background. It sometimes triggers when a video is paused (couple times in the row with the same value)
      */
     public static void setCurrentVideoTimeHighPrecision(final long millis) {
+        if ((millis < lastKnownVideoTime && lastKnownVideoTime >= currentVideoLength) || millis == 0) {
+            SponsorBlockUtils.showShieldButton(); // skipping from end to the video will show the buttons again
+            SponsorBlockUtils.showVoteButton();
+        }
         if (lastKnownVideoTime > 0) {
             lastKnownVideoTime = millis;
             VideoInformation.lastKnownVideoTime = lastKnownVideoTime;
         }
         else
             setCurrentVideoTime(millis);
+    }
+
+    public static long getCurrentVideoLength() {
+        return currentVideoLength;
     }
 
     public static long getLastKnownVideoTime() {
@@ -303,7 +324,9 @@ public class PlayerController {
 
     public static void setSponsorBarRect(final Object self) {
         try {
-            Rect rect = ((Rect) self.getClass().getField("e").get(self));
+            Field field = self.getClass().getDeclaredField("e");
+            field.setAccessible(true);
+            Rect rect = (Rect) field.get(self);
             if (rect != null) {
                 setSponsorBarAbsoluteLeft(rect.left);
                 setSponsorBarAbsoluteRight(rect.right);

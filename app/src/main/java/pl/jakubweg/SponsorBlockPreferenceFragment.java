@@ -18,7 +18,6 @@ import android.preference.SwitchPreference;
 import android.text.InputType;
 import android.widget.Toast;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import static pl.jakubweg.SponsorBlockSettings.DefaultBehaviour;
@@ -28,15 +27,14 @@ import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_NEW_SEGMENT_ENABL
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_SHOW_TOAST_WHEN_SKIP;
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_SPONSOR_BLOCK_ENABLED;
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_UUID;
+import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_VOTING_ENABLED;
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_NAME;
 import static pl.jakubweg.SponsorBlockSettings.adjustNewSegmentMillis;
 import static pl.jakubweg.SponsorBlockSettings.countSkips;
-import static pl.jakubweg.SponsorBlockSettings.getPreferences;
 import static pl.jakubweg.SponsorBlockSettings.setSeenGuidelines;
 import static pl.jakubweg.SponsorBlockSettings.showToastWhenSkippedAutomatically;
 import static pl.jakubweg.SponsorBlockSettings.uuid;
 import static pl.jakubweg.StringRef.str;
-
 
 @SuppressWarnings({"unused", "deprecation"}) // injected
 public class SponsorBlockPreferenceFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -54,6 +52,8 @@ public class SponsorBlockPreferenceFragment extends PreferenceFragment implement
 
         PreferenceScreen preferenceScreen = getPreferenceManager().createPreferenceScreen(context);
         setPreferenceScreen(preferenceScreen);
+
+        SponsorBlockSettings.update(context);
 
         {
             SwitchPreference preference = new SwitchPreference(context);
@@ -102,6 +102,17 @@ public class SponsorBlockPreferenceFragment extends PreferenceFragment implement
                     return true;
                 }
             });
+        }
+
+        {
+            SwitchPreference preference = new SwitchPreference(context);
+            preferenceScreen.addPreference(preference);
+            preference.setTitle(str("enable_voting"));
+            preference.setSummary(str("enable_voting_sum"));
+            preference.setKey(PREFERENCES_KEY_VOTING_ENABLED);
+            preference.setDefaultValue(SponsorBlockSettings.isVotingEnabled);
+            preference.setChecked(SponsorBlockSettings.isVotingEnabled);
+            preferencesToDisableWhenSBDisabled.add(preference);
         }
 
         addGeneralCategory(context, preferenceScreen);

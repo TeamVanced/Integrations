@@ -179,8 +179,8 @@ public class SponsorBlockSettings {
         Interaction("interaction", sf("segments_subscribe"), sf("skipped_subscribe"), sf("segments_subscribe_sum"), null, 0xFFcc00ff),
         SelfPromo("selfpromo", sf("segments_selfpromo"), sf("skipped_selfpromo"), sf("segments_selfpromo_sum"), null, 0xFFffff00),
         MusicOfftopic("music_offtopic", sf("segments_nomusic"), sf("skipped_nomusic"), sf("segments_nomusic_sum"), null, 0xFFff9900),
-        Preview("preview", sf("segments_preview"), sf("skipped_preview"), sf("segments_preview_sum"), null, 0xFFff1684),
-        Unsubmitted("unsubmitted", StringRef.empty, sf("skipped_unsubmitted"), StringRef.empty, SegmentBehaviour.SkipAutomatically, 0xFF000000),
+        Preview("preview", sf("segments_preview"), sf("skipped_preview"), sf("segments_preview_sum"), null, 0xFF0b9d65),
+        Unsubmitted("unsubmitted", StringRef.empty, sf("skipped_unsubmitted"), StringRef.empty, SegmentBehaviour.SkipAutomatically, 0xFFFFFFFF),
         ;
 
         private static SegmentInfo[] mValuesWithoutUnsubmitted = new SegmentInfo[]{

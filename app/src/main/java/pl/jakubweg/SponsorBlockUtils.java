@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -366,9 +367,12 @@ public abstract class SponsorBlockUtils {
             return;
         }
         int segmentAmount = sponsorSegmentsOfCurrentVideo.length;
-        CharSequence[] titles = new CharSequence[segmentAmount];
+        List<CharSequence> titles = new ArrayList<>(segmentAmount); // I've replaced an array with a list to prevent null elements in the array as unsubmitted segments get filtered out
         for (int i = 0; i < segmentAmount; i++) {
             SponsorSegment segment = sponsorSegmentsOfCurrentVideo[i];
+            if (segment.category == SponsorBlockSettings.SegmentInfo.Unsubmitted) {
+                continue;
+            }
 
             String start = dateFormatter.format(new Date(segment.start));
             String end = dateFormatter.format(new Date(segment.end));
@@ -377,16 +381,16 @@ public abstract class SponsorBlockUtils {
                     segment.category.color, segment.category.title, start, end));
             if (i + 1 != segmentAmount) // prevents trailing new line after last segment
                 htmlBuilder.append("<br>");
-            titles[i] = Html.fromHtml(htmlBuilder.toString());
+            titles.add(Html.fromHtml(htmlBuilder.toString()));
         }
 
         new AlertDialog.Builder(context)
-                .setItems(titles, segmentVoteClickListener)
+                .setItems(titles.toArray(new CharSequence[0]), segmentVoteClickListener)
                 .show();
     }
 
     private static void onNewCategorySelect(final SponsorSegment segment, Context context) {
-        final SponsorBlockSettings.SegmentInfo[] values = SponsorBlockSettings.SegmentInfo.valuesWithoutPreview();
+        final SponsorBlockSettings.SegmentInfo[] values = SponsorBlockSettings.SegmentInfo.valuesWithoutUnsubmitted();
         CharSequence[] titles = new CharSequence[values.length];
         for (int i = 0; i < values.length; i++) {
             titles[i] = values[i].getTitleWithDot();

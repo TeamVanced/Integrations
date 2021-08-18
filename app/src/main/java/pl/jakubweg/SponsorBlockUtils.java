@@ -108,7 +108,7 @@ public abstract class SponsorBlockUtils {
     private static final DialogInterface.OnClickListener segmentTypeListener = (dialog, which) -> {
         SponsorBlockSettings.SegmentCategory segmentType = SponsorBlockSettings.SegmentCategory.valuesWithoutUnsubmitted()[which];
         boolean enableButton;
-        if (!segmentType.behaviour.isDisabled()) {
+        if (segmentType.behaviour.isDisabled()) {
             Toast.makeText(
                     ((AlertDialog) dialog).getContext().getApplicationContext(),
                     str("new_segment_disabled_category"),

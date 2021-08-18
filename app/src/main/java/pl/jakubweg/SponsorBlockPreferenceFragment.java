@@ -1,6 +1,6 @@
 package pl.jakubweg;
 
-import static pl.jakubweg.SponsorBlockSettings.DefaultBehaviour;
+import static pl.jakubweg.SponsorBlockSettings.DEFAULT_BEHAVIOR;
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_ADJUST_NEW_SEGMENT_STEP;
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_COUNT_SKIPS;
 import static pl.jakubweg.SponsorBlockSettings.PREFERENCES_KEY_NEW_SEGMENT_ENABLED;
@@ -143,7 +143,7 @@ public class SponsorBlockPreferenceFragment extends PreferenceFragment implement
         preferencesToDisableWhenSBDisabled.add(category);
         category.setTitle(str("diff_segments"));
 
-        String defaultValue = DefaultBehaviour.key;
+        String defaultValue = DEFAULT_BEHAVIOR.key;
         SponsorBlockSettings.SegmentBehaviour[] segmentBehaviours = SponsorBlockSettings.SegmentBehaviour.values();
         String[] entries = new String[segmentBehaviours.length];
         String[] entryValues = new String[segmentBehaviours.length];
@@ -153,13 +153,13 @@ public class SponsorBlockPreferenceFragment extends PreferenceFragment implement
             entryValues[i] = behaviour.key;
         }
 
-        SponsorBlockSettings.SegmentInfo[] categories = SponsorBlockSettings.SegmentInfo.valuesWithoutUnsubmitted();
+        SponsorBlockSettings.SegmentCategory[] categories = SponsorBlockSettings.SegmentCategory.valuesWithoutUnsubmitted();
 
-        for (SponsorBlockSettings.SegmentInfo segmentInfo : categories) {
+        for (SponsorBlockSettings.SegmentCategory segmentCategory : categories) {
             ListPreference preference = new ListPreference(context);
-            preference.setTitle(segmentInfo.getTitleWithDot());
-            preference.setSummary(segmentInfo.description.toString());
-            preference.setKey(segmentInfo.key);
+            preference.setTitle(segmentCategory.title);
+            preference.setSummary(segmentCategory.description.toString());
+            preference.setKey(segmentCategory.key);
             preference.setDefaultValue(defaultValue);
             preference.setEntries(entries);
             preference.setEntryValues(entryValues);
@@ -174,7 +174,7 @@ public class SponsorBlockPreferenceFragment extends PreferenceFragment implement
         colorPreference.setOnPreferenceClickListener(preference1 -> {
             CharSequence[] items = new CharSequence[categories.length];
             for (int i = 0; i < items.length; i++) {
-                items[i] = categories[i].getTitleWithDot();
+                items[i] = categories[i].title;
             }
 
             new AlertDialog.Builder(context)

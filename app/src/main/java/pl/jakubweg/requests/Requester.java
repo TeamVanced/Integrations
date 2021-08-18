@@ -48,15 +48,15 @@ public class Requester {
                 JSONArray responseArray = new JSONArray(parseJson(connection));
                 int length = responseArray.length();
                 for (int i = 0; i < length; i++) {
-                    JSONObject obj = ((JSONObject) responseArray.get(i));
+                    JSONObject obj = (JSONObject) responseArray.get(i);
                     JSONArray segment = obj.getJSONArray("segment");
                     long start = (long) (segment.getDouble(0) * 1000);
                     long end = (long) (segment.getDouble(1) * 1000);
                     String category = obj.getString("category");
                     String uuid = obj.getString("UUID");
 
-                    SponsorBlockSettings.SegmentInfo segmentCategory = SponsorBlockSettings.SegmentInfo.byCategoryKey(category);
-                    if (segmentCategory != null && segmentCategory.behaviour.showOnTimeBar) {
+                    SponsorBlockSettings.SegmentCategory segmentCategory = SponsorBlockSettings.SegmentCategory.byCategoryKey(category);
+                    if (segmentCategory != null) {
                         SponsorSegment sponsorSegment = new SponsorSegment(start, end, segmentCategory, uuid);
                         segments.add(sponsorSegment);
                     }

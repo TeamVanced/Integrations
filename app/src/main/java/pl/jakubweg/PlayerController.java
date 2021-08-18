@@ -1,5 +1,8 @@
 package pl.jakubweg;
 
+import static pl.jakubweg.SponsorBlockSettings.skippedSegments;
+import static pl.jakubweg.SponsorBlockSettings.skippedTime;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -24,9 +27,6 @@ import java.util.TimerTask;
 import fi.vanced.libraries.youtube.player.VideoInformation;
 import pl.jakubweg.objects.SponsorSegment;
 import pl.jakubweg.requests.Requester;
-
-import static pl.jakubweg.SponsorBlockSettings.skippedSegments;
-import static pl.jakubweg.SponsorBlockSettings.skippedTime;
 
 @SuppressLint({"LongLogTag"})
 public class PlayerController {
@@ -138,69 +138,6 @@ public class PlayerController {
     }
 
     /**
-     * Works in 14.x, waits some time of object to me filled with data,
-     * No longer used, i've found another way to get faster videoId
-     */
-    @Deprecated
-    public static void asyncGetVideoLinkFromObject(final Object o) {
-        // code no longer used
-
-        //        if (currentVideoLink != null) {
-//            if (VERBOSE)
-//                Log.w(TAG, "asyncGetVideoLinkFromObject: currentVideoLink != null probably share button was clicked");
-//            return;
-//        }
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    // It used to be "b" in 14.x version, it's "a" in 15.x
-//                    Field b = o.getClass().getDeclaredField("b");
-//
-//                    int attempts = 0;
-//                    String videoUrl = null;
-//                    while (true) {
-//                        Object objLink = b.get(o);
-//                        if (objLink == null) {
-//                            if (VERBOSE)
-//                                Log.e(TAG, "asyncGetVideoLinkFromObject: objLink is null");
-//                        } else {
-//                            videoUrl = objLink.toString();
-//                            if (videoUrl.isEmpty())
-//                                videoUrl = null;
-//                        }
-//
-//                        if (videoUrl != null)
-//                            break;
-//
-//                        if (attempts++ > 5) {
-//                            Log.w(TAG, "asyncGetVideoLinkFromObject: attempts++ > 5");
-//                            return;
-//                        }
-//                        Thread.sleep(50);
-//                    }
-//
-//                    if (currentVideoLink == null) {
-//                        currentVideoLink = videoUrl;
-//                        if (VERBOSE)
-//                            Log.d(TAG, "asyncGetVideoLinkFromObject: link set to " + videoUrl);
-//
-//                        executeDownloadSegments(substringVideoIdFromLink(videoUrl), false);
-//                    }
-//
-//                } catch (Exception e) {
-//                    Log.e(TAG, "Cannot get link from object", e);
-//                }
-//            }
-//        }).start();
-//
-//        Activity activity = playerActivity.get();
-//        if (activity != null)
-//            SponsorBlockUtils.addImageButton(activity);
-    }
-
-    /**
      * Called when it's time to update the UI with new second, about once per second, only when playing, also in background
      */
     public static void setCurrentVideoTime(long millis) {
@@ -269,19 +206,19 @@ public class PlayerController {
     }
 
     private static void sendViewRequestAsync(final long millis, final SponsorSegment segment) {
-        if (segment.category != SponsorBlockSettings.SegmentInfo.UNSUBMITTED) {
-            Context context = YouTubeTikTokRoot_Application.getAppContext();
-            if (context != null) {
-                SharedPreferences preferences = SponsorBlockSettings.getPreferences(context);
-                long newSkippedTime = skippedTime + (segment.end - segment.start);
-                preferences.edit().putInt(SponsorBlockSettings.PREFERENCES_KEY_SKIPPED_SEGMENTS, skippedSegments + 1).apply();
-                preferences.edit().putLong(SponsorBlockSettings.PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME, newSkippedTime).apply();
-            }
+        if (segment.category == SponsorBlockSettings.SegmentCategory.UNSUBMITTED) {
+            return;
+        }
+        Context context = YouTubeTikTokRoot_Application.getAppContext();
+        if (context != null) {
+            SharedPreferences.Editor editor = SponsorBlockSettings.getPreferences(context).edit();
+            long newSkippedTime = skippedTime + (segment.end - segment.start);
+            editor.putInt(SponsorBlockSettings.PREFERENCES_KEY_SKIPPED_SEGMENTS, skippedSegments + 1);
+            editor.putLong(SponsorBlockSettings.PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME, newSkippedTime);
+            editor.apply();
         }
         new Thread(() -> {
-            if (SponsorBlockSettings.countSkips &&
-                    segment.category != SponsorBlockSettings.SegmentInfo.UNSUBMITTED &&
-                    millis - segment.start < 2000) {
+            if (SponsorBlockSettings.countSkips && millis - segment.start < 2000) {
                 // Only skips from the start should count as a view
                 Requester.sendViewCountRequest(segment);
             }
@@ -509,7 +446,7 @@ public class PlayerController {
 
         skipToMillisecond(segment.end + 2);
         SkipSegmentView.hide();
-        if (segment.category == SponsorBlockSettings.SegmentInfo.UNSUBMITTED) {
+        if (segment.category == SponsorBlockSettings.SegmentCategory.UNSUBMITTED) {
             SponsorSegment[] newSegments = new SponsorSegment[sponsorSegmentsOfCurrentVideo.length - 1];
             int i = 0;
             for (SponsorSegment sponsorSegment : sponsorSegmentsOfCurrentVideo) {

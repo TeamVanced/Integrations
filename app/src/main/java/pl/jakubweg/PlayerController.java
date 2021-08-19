@@ -45,7 +45,6 @@ public class PlayerController {
     private static long currentVideoLength = 1L;
     private static long lastKnownVideoTime = -1L;
     private static final Runnable findAndSkipSegmentRunnable = () -> {
-//            Log.d(TAG, "findAndSkipSegmentRunnable");
         findAndSkipSegment(false);
     };
     private static float sponsorBarLeft = 1f;
@@ -89,7 +88,7 @@ public class PlayerController {
         sponsorTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                executeDownloadSegments(currentVideoId);
+                executeDownloadSegments(currentVideoId, context);
             }
         }, 0);
     }
@@ -124,8 +123,8 @@ public class PlayerController {
         }
     }
 
-    public static void executeDownloadSegments(String videoId) {
-        SponsorSegment[] segments = Requester.getSegments(videoId);
+    public static void executeDownloadSegments(String videoId, Context context) {
+        SponsorSegment[] segments = Requester.getSegments(videoId, context);
         Arrays.sort(segments);
 
         if (VERBOSE)

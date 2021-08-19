@@ -71,7 +71,6 @@ public abstract class SponsorBlockUtils {
     public static final SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     public static boolean videoHasSegments = false;
     public static String timeWithoutSegments = "";
-    private static final int sponsorBtnId = 1234;
     public static final View.OnClickListener sponsorBlockBtnListener = v -> {
         if (debug) {
             Log.d(TAG, "Shield button clicked");
@@ -153,7 +152,7 @@ public abstract class SponsorBlockUtils {
         }
 
         if (videoId != null)
-            PlayerController.executeDownloadSegments(videoId);
+            PlayerController.executeDownloadSegments(videoId, appContext.get());
     };
     private static final DialogInterface.OnClickListener segmentCategorySelectedDialogListener = (dialog, which) -> {
         dialog.dismiss();
@@ -440,7 +439,7 @@ public abstract class SponsorBlockUtils {
         return totalTime;
     }
 
-    public static String getTimeWithoutSegments(SponsorSegment[] sponsorSegmentsOfCurrentVideo) {
+    private static String getTimeWithoutSegments(SponsorSegment[] sponsorSegmentsOfCurrentVideo) {
         long currentVideoLength = getCurrentVideoLength();
         if (!isSettingEnabled(showTimeWithoutSegments) || sponsorSegmentsOfCurrentVideo == null || currentVideoLength <= 1) {
             return "";
@@ -627,6 +626,34 @@ public abstract class SponsorBlockUtils {
             ex.printStackTrace();
             return "";
         }
+    }
+
+    public static void parseAndInsertSegments(JSONArray segmentArrayJson, List<SponsorSegment> segmentList) {
+        int length = segmentArrayJson.length();
+        try {
+            for (int i = 0; i < length; i++) {
+                JSONObject obj = segmentArrayJson.getJSONObject(i);
+                JSONArray segment = obj.getJSONArray("segment");
+                long start = (long) (segment.getDouble(0) * 1000);
+                long end = (long) (segment.getDouble(1) * 1000);
+                String category = obj.getString("category");
+                String uuid = obj.getString("UUID");
+
+                SponsorBlockSettings.SegmentCategory segmentCategory = SponsorBlockSettings.SegmentCategory.byCategoryKey(category);
+                if (segmentCategory != null) {
+                    SponsorSegment sponsorSegment = new SponsorSegment(start, end, segmentCategory, uuid);
+                    segmentList.add(sponsorSegment);
+                }
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static void setTimeWithoutSegments(SponsorSegment[] segments) {
+        videoHasSegments = true;
+        timeWithoutSegments = getTimeWithoutSegments(segments);
     }
 
     public static boolean isSettingEnabled(boolean setting) {

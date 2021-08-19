@@ -29,6 +29,7 @@ public class SponsorBlockSettings {
     public static final String PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME = "sb-skipped-segments-time";
     public static final String PREFERENCES_KEY_SHOW_TIME_WITHOUT_SEGMENTS = "sb-length-without-segments";
     public static final String PREFERENCES_KEY_CATEGORY_COLOR_SUFFIX = "_color";
+    public static final String PREFERENCES_KEY_VIDEO_SEGMENTS_PREFIX = "video_";
 
     public static final SegmentBehaviour DEFAULT_BEHAVIOR = SegmentBehaviour.SKIP_AUTOMATICALLY;
 

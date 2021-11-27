@@ -38,8 +38,8 @@ public class SponsorBlockView {
         }
     }
 
-    public static void showSkipButton() {
-        skipSponsorButtonVisibility(true);
+    public static void showSkipButton(boolean mute) {
+        skipSponsorButtonVisibility(true, mute);
     }
     public static void hideSkipButton() {
         skipSponsorButtonVisibility(false);
@@ -105,6 +105,10 @@ public class SponsorBlockView {
     }
 
     private static void skipSponsorButtonVisibility(boolean visible) {
+        skipSponsorButtonVisibility(visible, false);
+    }
+
+    private static void skipSponsorButtonVisibility(boolean visible, boolean mute) {
         SkipSponsorButton skipSponsorButton = _skipSponsorButton.get();
         if (skipSponsorButton == null) {
             Log.e(TAG, "Unable to skipSponsorButtonVisibility");
@@ -113,6 +117,7 @@ public class SponsorBlockView {
 
         visible &= shouldShowOnPlayerType;
 
+        skipSponsorButton.setMuted(mute);
         skipSponsorButton.setVisibility(visible ? View.VISIBLE : View.GONE);
         bringLayoutToFront();
     }

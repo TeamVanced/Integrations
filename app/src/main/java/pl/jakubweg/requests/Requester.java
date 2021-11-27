@@ -39,7 +39,7 @@ public class Requester {
     public static synchronized SponsorSegment[] getSegments(String videoId) {
         List<SponsorSegment> segments = new ArrayList<>();
         try {
-            HttpURLConnection connection = getConnectionFromRoute(Route.GET_SEGMENTS, videoId, SponsorBlockSettings.sponsorBlockUrlCategories);
+            HttpURLConnection connection = getConnectionFromRoute(Route.GET_SEGMENTS, videoId, SponsorBlockSettings.sponsorBlockUrlCategories, SponsorBlockSettings.sponsorBlockUrlActionTypes);
             int responseCode = connection.getResponseCode();
             videoHasSegments = false;
             timeWithoutSegments = "";
@@ -53,11 +53,13 @@ public class Requester {
                     long start = (long) (segment.getDouble(0) * 1000);
                     long end = (long) (segment.getDouble(1) * 1000);
                     String category = obj.getString("category");
+                    String actionType = obj.getString("actionType");
                     String uuid = obj.getString("UUID");
 
                     SponsorBlockSettings.SegmentInfo segmentCategory = SponsorBlockSettings.SegmentInfo.byCategoryKey(category);
+                    SponsorBlockSettings.ActionType segmentActionType = SponsorBlockSettings.ActionType.byKey(category);
                     if (segmentCategory != null && segmentCategory.behaviour.showOnTimeBar) {
-                        SponsorSegment sponsorSegment = new SponsorSegment(start, end, segmentCategory, uuid);
+                        SponsorSegment sponsorSegment = new SponsorSegment(start, end, segmentCategory, segmentActionType, uuid);
                         segments.add(sponsorSegment);
                     }
                 }

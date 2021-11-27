@@ -19,8 +19,8 @@ public class SkipSegmentView {
     public static final String TAG = "jakubweg.SkipSegmentView";
     private static SponsorSegment lastNotifiedSegment;
 
-    public static void show() {
-        showSkipButton();
+    public static void show(boolean mute) {
+        showSkipButton(mute);
     }
 
     public static void hide() {

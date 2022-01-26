@@ -40,10 +40,15 @@ public class PlayerController {
     public static SponsorSegment[] sponsorSegmentsOfCurrentVideo;
     private static WeakReference<Object> currentPlayerController = new WeakReference<>(null);
     private static Method setMillisecondMethod;
+    private static Method setVolumeMethod;
+    private static Method getVolumeMethod;
     private static long allowNextSkipRequestTime = 0L;
     private static String currentVideoId;
     private static long currentVideoLength = 1L;
     private static long lastKnownVideoTime = -1L;
+    private static long lastKnownVolume = -1L;
+    private static boolean currentlyMuted = false;
+    private static long muteEndTime = -1L;
     private static final Runnable findAndSkipSegmentRunnable = () -> {
 //            Log.d(TAG, "findAndSkipSegmentRunnable");
         findAndSkipSegment(false);
@@ -111,6 +116,10 @@ public class PlayerController {
         try {
             setMillisecondMethod = o.getClass().getMethod("replaceMeWithsetMillisecondMethod", Long.TYPE);
             setMillisecondMethod.setAccessible(true);
+            setVolumeMethod = o.getClass().getMethod("replaceMeWithsetVolumeMethod", Long.TYPE);
+            setVolumeMethod.setAccessible(true);
+            getVolumeMethod = o.getClass().getMethod("replaceMeWithgetVolumeMethod");
+            getVolumeMethod.setAccessible(true);
 
             lastKnownVideoTime = 0;
             VideoInformation.lastKnownVideoTime = 0;
@@ -226,7 +235,12 @@ public class PlayerController {
 
         for (final SponsorSegment segment : segments) {
             if (segment.start > millis) {
-                if (segment.start > startTimerAtMillis)
+                long scheduleTime = segment.start;
+                if (muteEndTime > millis && muteEndTime < segment.start) {
+                    scheduleTime = muteEndTime;
+                }
+
+                if (scheduleTime > startTimerAtMillis)
                     break; // it's more then START_TIMER_BEFORE_SEGMENT_MILLIS far away
                 if (!segment.category.behaviour.skip)
                     break;
@@ -238,12 +252,12 @@ public class PlayerController {
                         @Override
                         public void run() {
                             skipSponsorTask = null;
-                            lastKnownVideoTime = segment.start + 1;
+                            lastKnownVideoTime = scheduleTime + 1;
                             VideoInformation.lastKnownVideoTime = lastKnownVideoTime;
                             new Handler(Looper.getMainLooper()).post(findAndSkipSegmentRunnable);
                         }
                     };
-                    sponsorTimer.schedule(skipSponsorTask, segment.start - millis);
+                    sponsorTimer.schedule(skipSponsorTask, scheduleTime - millis);
                 } else {
                     if (VERBOSE)
                         Log.d(TAG, "skipSponsorTask is already scheduled...");
@@ -472,6 +486,45 @@ public class PlayerController {
         });
     }
 
+    public static void setMute(final boolean value) {
+        if (setVolumeMethod == null || getVolumeMethod == null) {
+            Log.e(TAG, "setVolumeMethod or getVolumeMethod is null");
+            return;
+        }
+
+
+        final Object currentObj = currentPlayerController.get();
+        if (currentObj == null) {
+            Log.e(TAG, "currentObj is null (might have been collected by GC)");
+            return;
+        }
+
+
+        if (VERBOSE)
+            Log.d(TAG, String.format("Requesting set mute to %b on thread %s", value, Thread.currentThread().toString()));
+
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                if (VERBOSE)
+                    Log.i(TAG, "Setting to mute=" + value);
+                long currentVolume = getVolumeMethod.invoke(currentObj);
+                if (value && currentVolume > 0) {
+                    lastKnownVolume = currentVolume;
+                }
+
+                if (value) {
+                    setVolumeMethod.invoke(currentObj, 0);
+                } else {
+                    setVolumeMethod.invoke(currentObj, lastKnownVolume);
+                }
+
+                currentlyMuted = value;
+            } catch (Exception e) {
+                Log.e(TAG, "Cannot skip to millisecond", e);
+            }
+        });
+    }
+
 
     private static void findAndSkipSegment(boolean wasClicked) {
         if (sponsorSegmentsOfCurrentVideo == null)
@@ -480,13 +533,18 @@ public class PlayerController {
         final long millis = lastKnownVideoTime;
 
         for (SponsorSegment segment : sponsorSegmentsOfCurrentVideo) {
+            if (currentlyMuted) {
+                setMute(false);
+                muteEndTime = -1;
+            }
+
             if (segment.start > millis)
                 break;
 
             if (segment.end < millis)
                 continue;
 
-            SkipSegmentView.show();
+            SkipSegmentView.show(segment.actionType == SponsorBlockSettings.ActionType.MUTE);
             if (!(segment.category.behaviour.skip || wasClicked))
                 return;
 
@@ -501,13 +559,24 @@ public class PlayerController {
     private static void skipSegment(SponsorSegment segment, boolean wasClicked) {
 //        if (lastSkippedSegment == segment) return;
 //        lastSkippedSegment = segment;
-        if (VERBOSE)
-            Log.d(TAG, "Skipping segment: " + segment.toString());
+        if (VERBOSE) {
+            if (segment.actionType == SponsorBlockSettings.ActionType.SKIP) {
+                Log.d(TAG, "Skipping segment: " + segment.toString());
+            } else if (segment.actionType == SponsorBlockSettings.ActionType.MUTE) {
+                Log.d(TAG, "Muting segment: " + segment.toString());
+            }
+        }
 
         if (SponsorBlockSettings.showToastWhenSkippedAutomatically && !wasClicked)
             SkipSegmentView.notifySkipped(segment);
 
-        skipToMillisecond(segment.end + 2);
+        if (segment.actionType == SponsorBlockSettings.ActionType.SKIP) {
+            skipToMillisecond(segment.end + 2);
+        } else if (segment.actionType == SponsorBlockSettings.ActionType.MUTE) {
+            setMute(true);
+            if (segment.end > muteEndTime) muteEndTime = segment.end;
+        }
+
         SkipSegmentView.hide();
         if (segment.category == SponsorBlockSettings.SegmentInfo.UNSUBMITTED) {
             SponsorSegment[] newSegments = new SponsorSegment[sponsorSegmentsOfCurrentVideo.length - 1];

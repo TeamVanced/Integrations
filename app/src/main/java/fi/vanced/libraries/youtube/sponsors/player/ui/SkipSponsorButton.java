@@ -23,6 +23,7 @@ public class SkipSponsorButton extends FrameLayout {
     String TAG = "SkipSponsorButton";
     public CharSequence skipSponsorTextViewText;
     public CharSequence skipSponsorText;
+    public CharSequence muteSegmentText;
     public ImageView skipSponsorButtonIcon;
     public TextView skipSponsorTextView;
     public int currentTextColor;
@@ -88,7 +89,8 @@ public class SkipSponsorButton extends FrameLayout {
         Resources resources = context.getResources();
         this.defaultBottomMargin = resources.getDimensionPixelSize(getIdentifier(context, "skip_button_default_bottom_margin", "dimen"));  // dimen:skip_button_default_bottom_margin
         this.ctaBottomMargin = resources.getDimensionPixelSize(getIdentifier(context, "skip_button_cta_bottom_margin", "dimen"));  // dimen:skip_button_cta_bottom_margin
-        this.skipSponsorText = resources.getText(getIdentifier(context, "skip_sponsor", "string"));  // string:skip_ads "Skip ads"
+        this.skipSponsorText = resources.getText(getIdentifier(context, "skip_sponsor", "string"));  // string:skip_ads "Skip segment"
+        this.muteSegmentText = resources.getText(getIdentifier(context, "mute_segment", "string"));  // string:mute_segment "Mute segment"
 
         this.skipSponsorBtnContainer.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,6 +119,14 @@ public class SkipSponsorButton extends FrameLayout {
         }
 
         super.dispatchDraw(canvas);
+    }
+
+    public void setMuted(boolean muted) {
+        if (muted) {
+            this.skipSponsorTextView.setText(this.muteSegmentText);
+        } else {
+            this.skipSponsorTextView.setText(this.skipSponsorText);
+        }
     }
 
 

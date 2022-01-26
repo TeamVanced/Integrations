@@ -6,12 +6,15 @@ public class SponsorSegment implements Comparable<SponsorSegment> {
     public final long start;
     public final long end;
     public final SponsorBlockSettings.SegmentInfo category;
+    public final SponsorBlockSettings.ActionType actionType;
     public final String UUID;
 
-    public SponsorSegment(long start, long end, SponsorBlockSettings.SegmentInfo category, String UUID) {
+    public SponsorSegment(long start, long end, SponsorBlockSettings.SegmentInfo category, 
+            SponsorBlockSettings.ActionType actionType, String UUID) {
         this.start = start;
         this.end = end;
         this.category = category;
+        this.actionType = actionType;
         this.UUID = UUID;
     }
 
@@ -21,6 +24,7 @@ public class SponsorSegment implements Comparable<SponsorSegment> {
                 "start=" + start +
                 ", end=" + end +
                 ", category='" + category + '\'' +
+                ", actionType='" + actionType + '\'' +
                 '}';
     }
 

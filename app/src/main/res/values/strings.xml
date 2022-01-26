@@ -237,6 +237,7 @@
     <string name="sb_guidelines_popup_open">Show me</string>
 
     <string name="skip_sponsor">Skip segment</string>
+    <string name="mute_segment">Mute segment</string>
 
     <string name="litho_comments">Comments removal</string>
     <string name="litho_comments_off">Comments removal is turned off (new comments / phones only)</string>

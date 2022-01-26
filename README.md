@@ -1,7 +1,7 @@
 # SponsorBlock YouTube Vanced Implementation
 In order to use this in YouTube/Vanced you must first apply the smali mods applied to vanced (the patching process used for this is currently automated using our closed source tools with no plans to open source it for the time being) (if you mod vanced directly it is not required)
 * First make your edits in android studio
-* Change the string "replaceMeWithsetMillisecondMethod" on PlayerController.java to the method name of YouTube package
+* Change the string "replaceMeWithsetMillisecondMethod", "replaceMeWithsetVolumeMethod", and "replaceMeWithgetVolumeMethod" on PlayerController.java to the method name of YouTube package
 * Compile debug apk
 * Decompile this apk using apktool https://github.com/iBotPeaches/Apktool
 * Take this decompiled folder and look for a folder labeled pl in one of your dex class folders

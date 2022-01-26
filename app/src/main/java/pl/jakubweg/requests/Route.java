@@ -6,7 +6,7 @@ import static pl.jakubweg.requests.Route.Method.POST;
 import pl.jakubweg.SponsorBlockUtils;
 
 public class Route {
-    public static final Route GET_SEGMENTS =             new Route(GET,   "skipSegments?videoID={video_id}&categories={categories}");
+    public static final Route GET_SEGMENTS =             new Route(GET,   "skipSegments?videoID={video_id}&categories={categories}&actionTypes={actionTypes}");
     public static final Route VIEWED_SEGMENT =           new Route(POST,  "viewedVideoSponsorTime?UUID={segment_id}");
     public static final Route GET_USER_STATS =           new Route(GET,   "userInfo?userID={user_id}&values=[\"userName\", \"minutesSaved\", \"segmentCount\", \"viewCount\"]");
     public static final Route CHANGE_USERNAME =          new Route(POST,  "setUsername?userID={user_id}&username={username}");

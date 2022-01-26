@@ -30,6 +30,7 @@ public class SponsorBlockSettings {
     public static final String PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME = "sb-skipped-segments-time";
     public static final String PREFERENCES_KEY_SHOW_TIME_WITHOUT_SEGMENTS = "sb-length-without-segments";
     public static final String PREFERENCES_KEY_CATEGORY_COLOR_SUFFIX = "_color";
+    public static final String PREFERENCES_KEY_MUTE_ENABLED = "sb-voting-enabled";
 
     public static final SegmentBehaviour DefaultBehaviour = SegmentBehaviour.SKIP_AUTOMATICALLY;
 
@@ -40,9 +41,11 @@ public class SponsorBlockSettings {
     public static boolean showToastWhenSkippedAutomatically = true;
     public static boolean countSkips = true;
     public static boolean showTimeWithoutSegments = true;
+    public static boolean isMuteEnabled = true;
     public static int adjustNewSegmentMillis = 150;
     public static String uuid = "<invalid>";
     public static String sponsorBlockUrlCategories = "[]";
+    public static String sponsorBlockUrlActionTypes = "[%22skip%22]";
     public static int skippedSegments;
     public static long skippedTime;
 
@@ -123,6 +126,11 @@ public class SponsorBlockSettings {
             sponsorBlockUrlCategories = "[]";
         else
             sponsorBlockUrlCategories = "[%22" + TextUtils.join("%22,%22", enabledCategories) + "%22]";
+
+        isMuteEnabled = preferences.getBoolean(PREFERENCES_KEY_MUTE_ENABLED, isMuteEnabled);
+        if (isMuteEnabled) {
+            sponsorBlockUrlMute = "[%22skip%22, %mute%22]";
+        }
 
         skippedSegments = preferences.getInt(PREFERENCES_KEY_SKIPPED_SEGMENTS, skippedSegments);
         skippedTime = preferences.getLong(PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME, skippedTime);
@@ -247,6 +255,27 @@ public class SponsorBlockSettings {
 
         public CharSequence getTitleWithDot() {
             return Html.fromHtml(String.format("<font color=\"#%06X\">⬤</font> %s", color, title));
+        }
+    }
+
+    public enum ActionType {
+        SKIP("skip"),
+        MUTE("mute");
+
+        private String key;
+
+        private static final Map<String, SegmentInfo> mValuesMap = new HashMap<>(values().length);
+        static {
+            for (SegmentInfo value : valuesWithoutUnsubmitted())
+                mValuesMap.put(value.key, value);
+        }
+
+        ActionType(String key) {
+            this.key = key;
+        }
+
+        public static SegmentInfo byKey(String key) {
+            return mValuesMap.get(key);
         }
     }
 }

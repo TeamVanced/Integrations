@@ -10,9 +10,8 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class SponsorBlockSettings {
@@ -30,8 +29,9 @@ public class SponsorBlockSettings {
     public static final String PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME = "sb-skipped-segments-time";
     public static final String PREFERENCES_KEY_SHOW_TIME_WITHOUT_SEGMENTS = "sb-length-without-segments";
     public static final String PREFERENCES_KEY_CATEGORY_COLOR_SUFFIX = "_color";
+    public static final String PREFERENCES_KEY_VIDEO_SEGMENTS_PREFIX = "video_";
 
-    public static final SegmentBehaviour DefaultBehaviour = SegmentBehaviour.SKIP_AUTOMATICALLY;
+    public static final SegmentBehaviour DEFAULT_BEHAVIOR = SegmentBehaviour.SKIP_AUTOMATICALLY;
 
     public static boolean isSponsorBlockEnabled = false;
     public static boolean seenGuidelinesPopup = false;
@@ -92,37 +92,24 @@ public class SponsorBlockSettings {
         else
             SponsorBlockUtils.showVoteButton();
 
-        SegmentBehaviour[] possibleBehaviours = SegmentBehaviour.values();
-        final ArrayList<String> enabledCategories = new ArrayList<>(possibleBehaviours.length);
-        for (SegmentInfo segment : SegmentInfo.values()) {
-            String categoryColor = preferences.getString(segment.key + PREFERENCES_KEY_CATEGORY_COLOR_SUFFIX, SponsorBlockUtils.formatColorString(segment.defaultColor));
-            segment.setColor(Color.parseColor(categoryColor));
+        Set<String> enabledCategories = new HashSet<>(SegmentCategory.valuesWithoutUnsubmitted().length);
 
-            SegmentBehaviour behaviour = null;
-            String value = preferences.getString(segment.key, null);
-            if (value == null)
-                behaviour = DefaultBehaviour;
-            else {
-                for (SegmentBehaviour possibleBehaviour : possibleBehaviours) {
-                    if (possibleBehaviour.key.equals(value)) {
-                        behaviour = possibleBehaviour;
-                        break;
-                    }
-                }
+        for (SegmentCategory category : SegmentCategory.values()) {
+            String categoryKey = category.key;
+            String categoryColor = preferences.getString(categoryKey + PREFERENCES_KEY_CATEGORY_COLOR_SUFFIX, SponsorBlockUtils.formatColorString(category.defaultColor));
+            category.setColor(Color.parseColor(categoryColor));
+
+            String behaviorKey = preferences.getString(categoryKey, DEFAULT_BEHAVIOR.key);
+            SegmentBehaviour behaviour = SegmentBehaviour.byKey(behaviorKey);
+
+            category.behaviour = behaviour;
+
+            if (!behaviour.isDisabled() && category != SegmentCategory.UNSUBMITTED) {
+                enabledCategories.add(categoryKey);
             }
-            if (behaviour == null)
-                behaviour = DefaultBehaviour;
-
-            segment.behaviour = behaviour;
-            if (behaviour.showOnTimeBar && segment != SegmentInfo.UNSUBMITTED)
-                enabledCategories.add(segment.key);
         }
 
-        //"[%22sponsor%22,%22outro%22,%22music_offtopic%22,%22intro%22,%22selfpromo%22,%22interaction%22,%22preview%22]";
-        if (enabledCategories.isEmpty())
-            sponsorBlockUrlCategories = "[]";
-        else
-            sponsorBlockUrlCategories = "[%22" + TextUtils.join("%22,%22", enabledCategories) + "%22]";
+        sponsorBlockUrlCategories = "[%22" + TextUtils.join("%22,%22", enabledCategories) + "%22]";
 
         skippedSegments = preferences.getInt(PREFERENCES_KEY_SKIPPED_SEGMENTS, skippedSegments);
         skippedTime = preferences.getLong(PREFERENCES_KEY_SKIPPED_SEGMENTS_TIME, skippedTime);
@@ -146,26 +133,34 @@ public class SponsorBlockSettings {
     }
 
     public enum SegmentBehaviour {
-        SKIP_AUTOMATICALLY("skip", 2, sf("skip_automatically"), true, true),
-        MANUAL_SKIP("manual-skip", 1, sf("skip_showbutton"), false, true),
-        IGNORE("ignore", -1, sf("skip_ignore"), false, false);
+        SKIP_AUTOMATICALLY("skip", 2, sf("skip_automatically"), true),
+        MANUAL_SKIP("manual-skip", 1, sf("skip_showbutton"), false),
+        SHOW("show", 0, sf("skip_show"), false),
+        DISABLED("disabled", -1, sf("skip_disabled"), false);
 
         public final String key;
         public final int desktopKey;
         public final StringRef name;
         public final boolean skip;
-        public final boolean showOnTimeBar;
 
-        SegmentBehaviour(String key,
-                         int desktopKey,
-                         StringRef name,
-                         boolean skip,
-                         boolean showOnTimeBar) {
+        SegmentBehaviour(String key, int desktopKey, StringRef name, boolean skip) {
             this.key = key;
             this.desktopKey = desktopKey;
             this.name = name;
             this.skip = skip;
-            this.showOnTimeBar = showOnTimeBar;
+        }
+
+        public boolean isDisabled() {
+            return this == SegmentBehaviour.DISABLED;
+        }
+
+        public static SegmentBehaviour byKey(String key) {
+            for (SegmentBehaviour behaviour : values()) {
+                if (behaviour.key.equals(key)) {
+                    return behaviour;
+                }
+            }
+            return null;
         }
 
         public static SegmentBehaviour byDesktopKey(int desktopKey) {
@@ -178,7 +173,7 @@ public class SponsorBlockSettings {
         }
     }
 
-    public enum SegmentInfo {
+    public enum SegmentCategory {
         SPONSOR("sponsor", sf("segments_sponsor"), sf("skipped_sponsor"), sf("segments_sponsor_sum"), null, 0xFF00d400),
         INTRO("intro", sf("segments_intermission"), sf("skipped_intermission"), sf("segments_intermission_sum"), null, 0xFF00ffff),
         OUTRO("outro", sf("segments_endcards"), sf("skipped_endcard"), sf("segments_endcards_sum"), null, 0xFF0202ed),
@@ -186,26 +181,10 @@ public class SponsorBlockSettings {
         SELF_PROMO("selfpromo", sf("segments_selfpromo"), sf("skipped_selfpromo"), sf("segments_selfpromo_sum"), null, 0xFFffff00),
         MUSIC_OFFTOPIC("music_offtopic", sf("segments_nomusic"), sf("skipped_nomusic"), sf("segments_nomusic_sum"), null, 0xFFff9900),
         PREVIEW("preview", sf("segments_preview"), sf("skipped_preview"), sf("segments_preview_sum"), null, 0xFF008fd6),
+        HIGHLIGHT("poi_highlight", sf("segments_highlight"), sf("skipped_to_highlight"), sf("segments_highlight_sum"), null, 0xFFff1684),
         UNSUBMITTED("unsubmitted", StringRef.empty, sf("skipped_unsubmitted"), StringRef.empty, SegmentBehaviour.SKIP_AUTOMATICALLY, 0xFFFFFFFF);
 
-        private static final SegmentInfo[] mValuesWithoutUnsubmitted = new SegmentInfo[]{
-                SPONSOR,
-                INTRO,
-                OUTRO,
-                INTERACTION,
-                SELF_PROMO,
-                MUSIC_OFFTOPIC,
-                PREVIEW
-        };
-        private static final Map<String, SegmentInfo> mValuesMap = new HashMap<>(values().length);
-
-        static {
-            for (SegmentInfo value : valuesWithoutUnsubmitted())
-                mValuesMap.put(value.key, value);
-        }
-
         public final String key;
-        public final StringRef title;
         public final StringRef skipMessage;
         public final StringRef description;
         public final Paint paint;
@@ -213,29 +192,36 @@ public class SponsorBlockSettings {
         public int color;
         public SegmentBehaviour behaviour;
 
-        SegmentInfo(String key,
-                    StringRef title,
-                    StringRef skipMessage,
-                    StringRef description,
-                    SegmentBehaviour behaviour,
-                    int defaultColor) {
+        private final StringRef titleRef;
+        public String rawTitle;
+        public CharSequence title;
 
+        private static final SegmentCategory[] valuesWithoutUnsubmitted;
+
+        static {
+            SegmentCategory[] values = values();
+            SegmentCategory[] withoutUnsubmitted = new SegmentCategory[values.length - 1];
+            for (int i = 0; i < values.length; i++) {
+                SegmentCategory category = values[i];
+                if (category != SegmentCategory.UNSUBMITTED) {
+                    withoutUnsubmitted[i] = category;
+                }
+            }
+            valuesWithoutUnsubmitted = withoutUnsubmitted;
+        }
+
+        SegmentCategory(String key, StringRef titleRef, StringRef skipMessage, StringRef description, SegmentBehaviour behaviour, int defaultColor) {
             this.key = key;
-            this.title = title;
             this.skipMessage = skipMessage;
             this.description = description;
             this.behaviour = behaviour;
             this.defaultColor = defaultColor;
-            this.color = defaultColor;
+
             this.paint = new Paint();
-        }
+            this.color = defaultColor;
+            this.titleRef = titleRef;
 
-        public static SegmentInfo[] valuesWithoutUnsubmitted() {
-            return mValuesWithoutUnsubmitted;
-        }
-
-        public static SegmentInfo byCategoryKey(String key) {
-            return mValuesMap.get(key);
+            formatTitle();
         }
 
         public void setColor(int color) {
@@ -243,10 +229,25 @@ public class SponsorBlockSettings {
             this.color = color;
             paint.setColor(color);
             paint.setAlpha(255);
+            formatTitle();
         }
 
-        public CharSequence getTitleWithDot() {
-            return Html.fromHtml(String.format("<font color=\"#%06X\">⬤</font> %s", color, title));
+        private void formatTitle() {
+            this.rawTitle = String.format("<font color=\"#%06X\">⬤</font> %s", color, titleRef);
+            this.title = Html.fromHtml(rawTitle);
+        }
+
+        public static SegmentCategory byCategoryKey(String key) {
+            for (SegmentCategory category : values()) {
+                if (category.key.equals(key)) {
+                    return category;
+                }
+            }
+            return null;
+        }
+
+        public static SegmentCategory[] valuesWithoutUnsubmitted() {
+            return valuesWithoutUnsubmitted;
         }
     }
 }

@@ -5,6 +5,7 @@ import static pl.jakubweg.SponsorBlockUtils.videoHasSegments;
 import static pl.jakubweg.StringRef.str;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.Preference;
@@ -36,40 +37,41 @@ public class Requester {
 
     private Requester() {}
 
-    public static synchronized SponsorSegment[] getSegments(String videoId) {
-        List<SponsorSegment> segments = new ArrayList<>();
+    public static synchronized SponsorSegment[] getSegments(String videoId, Context context) {
+        videoHasSegments = false;
+        timeWithoutSegments = "";
+
+        List<SponsorSegment> segmentList = new ArrayList<>();
         try {
             HttpURLConnection connection = getConnectionFromRoute(Route.GET_SEGMENTS, videoId, SponsorBlockSettings.sponsorBlockUrlCategories);
             int responseCode = connection.getResponseCode();
-            videoHasSegments = false;
-            timeWithoutSegments = "";
 
             if (responseCode == 200) {
                 JSONArray responseArray = new JSONArray(parseJson(connection));
-                int length = responseArray.length();
-                for (int i = 0; i < length; i++) {
-                    JSONObject obj = ((JSONObject) responseArray.get(i));
-                    JSONArray segment = obj.getJSONArray("segment");
-                    long start = (long) (segment.getDouble(0) * 1000);
-                    long end = (long) (segment.getDouble(1) * 1000);
-                    String category = obj.getString("category");
-                    String uuid = obj.getString("UUID");
-
-                    SponsorBlockSettings.SegmentInfo segmentCategory = SponsorBlockSettings.SegmentInfo.byCategoryKey(category);
-                    if (segmentCategory != null && segmentCategory.behaviour.showOnTimeBar) {
-                        SponsorSegment sponsorSegment = new SponsorSegment(start, end, segmentCategory, uuid);
-                        segments.add(sponsorSegment);
-                    }
-                }
-                videoHasSegments = true;
-                timeWithoutSegments = SponsorBlockUtils.getTimeWithoutSegments(segments.toArray(new SponsorSegment[0]));
+                SponsorBlockUtils.parseAndInsertSegments(responseArray, segmentList);
             }
             connection.disconnect();
         }
         catch (Exception ex) {
             ex.printStackTrace();
         }
-        return segments.toArray(new SponsorSegment[0]);
+
+        SharedPreferences preferences = SponsorBlockSettings.getPreferences(context);
+        String localSegmentsJson = preferences.getString(SponsorBlockSettings.PREFERENCES_KEY_VIDEO_SEGMENTS_PREFIX + videoId, null);
+        if (localSegmentsJson != null) {
+            try {
+                SponsorBlockUtils.parseAndInsertSegments(new JSONArray(localSegmentsJson), segmentList);
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        SponsorSegment[] segments = segmentList.toArray(new SponsorSegment[0]);
+        if (!segmentList.isEmpty()) {
+            SponsorBlockUtils.setTimeWithoutSegments(segments);
+        }
+        return segments;
     }
 
     public static void submitSegments(String videoId, String uuid, float startTime, float endTime, String category, Runnable toastRunnable) {

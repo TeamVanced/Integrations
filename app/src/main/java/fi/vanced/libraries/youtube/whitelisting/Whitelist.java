@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import fi.vanced.libraries.youtube.player.ChannelModel;
@@ -117,8 +116,7 @@ public class Whitelist {
             }
             return false;
         }
-        List<ChannelModel> whitelistedChannels = whitelistMap.get(whitelistType);
-        for (ChannelModel channel : whitelistedChannels) {
+        for (ChannelModel channel : getWhitelistedChannels(whitelistType)) {
             if (channel.getAuthor().equals(channelName)) {
                 if (debug) {
                     Log.d(TAG, String.format("Whitelist for channel %s for type %s", channelName, whitelistType));
@@ -130,7 +128,7 @@ public class Whitelist {
     }
 
     public static boolean addToWhitelist(WhitelistType whitelistType, Context context, ChannelModel channel) {
-        ArrayList<ChannelModel> whitelisted = whitelistMap.get(whitelistType);
+        ArrayList<ChannelModel> whitelisted = getWhitelistedChannels(whitelistType);
         for (ChannelModel whitelistedChannel : whitelisted) {
             String channelId = channel.getChannelId();
             if (whitelistedChannel.getChannelId().equals(channelId)) {
@@ -146,7 +144,7 @@ public class Whitelist {
     }
 
     public static void removeFromWhitelist(WhitelistType whitelistType, Context context, String channelName) {
-        ArrayList<ChannelModel> channels = whitelistMap.get(whitelistType);
+        ArrayList<ChannelModel> channels = getWhitelistedChannels(whitelistType);
         Iterator<ChannelModel> iterator = channels.iterator();
         while (iterator.hasNext()) {
             ChannelModel channel = iterator.next();
@@ -165,7 +163,7 @@ public class Whitelist {
         }
     }
 
-    private static boolean updateWhitelist(WhitelistType whitelistType, ArrayList<ChannelModel> channels, Context context) {
+    public static boolean updateWhitelist(WhitelistType whitelistType, ArrayList<ChannelModel> channels, Context context) {
         if (context == null) {
             return false;
         }
@@ -184,5 +182,9 @@ public class Whitelist {
 
     public static void setEnabled(WhitelistType whitelistType, boolean enabled) {
         enabledMap.put(whitelistType, enabled);
+    }
+
+    public static ArrayList<ChannelModel> getWhitelistedChannels(WhitelistType whitelistType) {
+        return whitelistMap.get(whitelistType);
     }
 }

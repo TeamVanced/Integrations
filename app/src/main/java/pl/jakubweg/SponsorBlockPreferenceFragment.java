@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import fi.vanced.libraries.youtube.whitelisting.WhitelistType;
 import fi.vanced.utils.SharedPrefUtils;
 import pl.jakubweg.objects.EditTextListPreference;
+import pl.jakubweg.objects.WhitelistedChannelsPreference;
 import pl.jakubweg.requests.SBRequester;
 
 @SuppressWarnings({"unused", "deprecation"}) // injected
@@ -378,6 +379,14 @@ public class SponsorBlockPreferenceFragment extends PreferenceFragment implement
                 SponsorBlockUtils.importSettings((String) newValue, applicationContext);
                 return false;
             });
+            screen.addPreference(preference);
+            preferencesToDisableWhenSBDisabled.add(preference);
+        }
+
+        {
+            WhitelistedChannelsPreference preference = new WhitelistedChannelsPreference(context);
+            preference.setTitle("Manage your whitelisted channels");
+            preference.setWhitelistType(WhitelistType.SPONSORBLOCK);
             screen.addPreference(preference);
             preferencesToDisableWhenSBDisabled.add(preference);
         }
